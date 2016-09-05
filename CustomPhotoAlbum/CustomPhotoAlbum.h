@@ -7,7 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
-@interface CustomPhotoAlbum : NSObject
+typedef void (*PhotoCallback)(int status, const char* filePath);
+
+@interface CustomPhotoAlbum : NSObject<UIImagePickerControllerDelegate, UINavigationControllerDelegate>{
+    PhotoCallback messageCallback;
+}
 
 @end

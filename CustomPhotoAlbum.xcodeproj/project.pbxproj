@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		95EB45A31D180B3200E94AB2 /* CustomPhotoAlbum.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 95EB45A21D180B3200E94AB2 /* CustomPhotoAlbum.h */; };
 		95EB45A51D180B3200E94AB2 /* CustomPhotoAlbum.m in Sources */ = {isa = PBXBuildFile; fileRef = 95EB45A41D180B3200E94AB2 /* CustomPhotoAlbum.m */; };
+		95EB45AE1D180B9500E94AB2 /* ALAssetsLibrary+CustomPhotoAlbum.m in Sources */ = {isa = PBXBuildFile; fileRef = 95EB45AD1D180B9500E94AB2 /* ALAssetsLibrary+CustomPhotoAlbum.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -28,6 +29,8 @@
 		95EB459F1D180B3200E94AB2 /* libCustomPhotoAlbum.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCustomPhotoAlbum.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		95EB45A21D180B3200E94AB2 /* CustomPhotoAlbum.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CustomPhotoAlbum.h; sourceTree = "<group>"; };
 		95EB45A41D180B3200E94AB2 /* CustomPhotoAlbum.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CustomPhotoAlbum.m; sourceTree = "<group>"; };
+		95EB45AC1D180B9500E94AB2 /* ALAssetsLibrary+CustomPhotoAlbum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ALAssetsLibrary+CustomPhotoAlbum.h"; sourceTree = "<group>"; };
+		95EB45AD1D180B9500E94AB2 /* ALAssetsLibrary+CustomPhotoAlbum.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "ALAssetsLibrary+CustomPhotoAlbum.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +47,7 @@
 		95EB45961D180B3200E94AB2 = {
 			isa = PBXGroup;
 			children = (
+				95EB45AB1D180B9500E94AB2 /* ALAssetsLibrary-CustomPhotoAlbum */,
 				95EB45A11D180B3200E94AB2 /* CustomPhotoAlbum */,
 				95EB45A01D180B3200E94AB2 /* Products */,
 			);
@@ -64,6 +68,15 @@
 				95EB45A41D180B3200E94AB2 /* CustomPhotoAlbum.m */,
 			);
 			path = CustomPhotoAlbum;
+			sourceTree = "<group>";
+		};
+		95EB45AB1D180B9500E94AB2 /* ALAssetsLibrary-CustomPhotoAlbum */ = {
+			isa = PBXGroup;
+			children = (
+				95EB45AC1D180B9500E94AB2 /* ALAssetsLibrary+CustomPhotoAlbum.h */,
+				95EB45AD1D180B9500E94AB2 /* ALAssetsLibrary+CustomPhotoAlbum.m */,
+			);
+			path = "ALAssetsLibrary-CustomPhotoAlbum";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -123,6 +136,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				95EB45A51D180B3200E94AB2 /* CustomPhotoAlbum.m in Sources */,
+				95EB45AE1D180B9500E94AB2 /* ALAssetsLibrary+CustomPhotoAlbum.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
