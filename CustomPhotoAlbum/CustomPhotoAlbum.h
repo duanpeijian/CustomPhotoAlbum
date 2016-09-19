@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-typedef void (*PhotoCallback)(int status, const char* filePath);
+typedef void (*PhotoCallback)(int status, const char* filePath, int width, int height);
 
 @interface CustomPhotoAlbum : NSObject<UIImagePickerControllerDelegate, UINavigationControllerDelegate>{
     PhotoCallback messageCallback;

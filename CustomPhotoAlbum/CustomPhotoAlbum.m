@@ -64,7 +64,7 @@
         NSLog(@"Camera Device unavaible..");
         
         if(messageCallback){
-            messageCallback(1, NULL);
+            messageCallback(1, NULL, 0, 0);
         }
     }
 }
@@ -89,7 +89,7 @@
     picker.delegate = nil;
     
     if(messageCallback){
-        messageCallback(1, nil);
+        messageCallback(1, nil, 0, 0);
     }
 }
 
@@ -110,63 +110,170 @@
     }
     CFRelease(mediaTypeRef);
     
-    // Manage tasks in background thread
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        UIImage * editedImage = (UIImage *)info[UIImagePickerControllerEditedImage];
-        UIImage * imageToSave = (editedImage ?: (UIImage *)info[UIImagePickerControllerOriginalImage]);
-        
-        UIImage * finalImageToSave = nil;
-        /* Modify image's size before save it to photos album
-         *
-         *  CGSize sizeToSave = CGSizeMake(imageToSave.size.width, imageToSave.size.height);
-         *  UIGraphicsBeginImageContextWithOptions(sizeToSave, NO, 0.f);
-         *  [imageToSave drawInRect:CGRectMake(0.f, 0.f, sizeToSave.width, sizeToSave.height)];
-         *  finalImageToSave = UIGraphicsGetImageFromCurrentImageContext();
-         *  UIGraphicsEndImageContext();
-         */
-        finalImageToSave = imageToSave;
-        
-        NSData * data;
-        if(UIImagePNGRepresentation(finalImageToSave)){
-            data = UIImagePNGRepresentation(finalImageToSave);
-        }
-        else {
-            data = UIImageJPEGRepresentation(finalImageToSave, 1.0f);
-        }
-        
-        NSArray * path = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-        NSString* documentPath = [path objectAtIndex:0];
-        
-        NSFileManager* manager = [NSFileManager defaultManager];
-        
-        NSString* imageDocPath = [documentPath stringByAppendingPathComponent:@"ImageStaging"];
-        [manager createDirectoryAtPath:imageDocPath withIntermediateDirectories:YES attributes:nil error:nil];
-        NSString* imagePath = [imageDocPath stringByAppendingPathComponent:@"tmp"];
-        
-//        NSString* strToSave = @"file to save!!";
-//        data = [strToSave dataUsingEncoding: NSUTF8StringEncoding];
-        
-        if(![manager fileExistsAtPath:imagePath]){
-            if(![manager createFileAtPath:imagePath contents:data attributes:nil]){
-                NSLog(@"create file error");
+    NSURL* imgURL = info[UIImagePickerControllerReferenceURL];
+    NSLog(@"image url: %@", imgURL);
+    
+    CGFloat size_limit = 256;
+    
+    if(imgURL != NULL){
+        [self.assetsLibrary assetForURL:imgURL resultBlock:^(ALAsset *asset){
+            ALAssetRepresentation *rep = [asset defaultRepresentation];
+            CGSize dimension = [rep dimensions];
+            
+            Byte *buffer = (Byte*)malloc(rep.size);
+            NSUInteger buffered = [rep getBytes:buffer fromOffset:0.0 length:rep.size error:nil];
+            NSData* data = [NSData dataWithBytesNoCopy:buffer length:buffered freeWhenDone:YES];
+            
+            CGFloat wf = dimension.width / size_limit;
+            CGFloat hf = dimension.height / size_limit;
+            
+            CGFloat factor = 1.0f;
+            if(wf > hf){
+                factor = wf;
             }
-        }
-        else{
-            NSError* error;
-            [data writeToFile:imagePath options:NSDataWritingAtomic error:&error];
-            if(error){
-                NSLog(@"writeToFile %@", error);
+            else{
+                factor = hf;
             }
             
-//            NSFileHandle* hanlder = [NSFileHandle fileHandleForWritingAtPath:imagePath];
-//            [hanlder writeData:data];
-//            [hanlder closeFile];
-        }
-        
-        if(messageCallback){
-            messageCallback(0, [imagePath UTF8String]);
-        }
-    });
+            if(factor <= 1){
+                factor = 1.0f;
+            }
+            
+            UIImage* image = [[UIImage alloc] initWithData:data scale:factor];
+            data = UIImagePNGRepresentation(image);
+            
+            NSArray * path = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+            NSString* documentPath = [path objectAtIndex:0];
+            
+            NSFileManager* manager = [NSFileManager defaultManager];
+            
+            NSString* imageDocPath = [documentPath stringByAppendingPathComponent:@"ImageStaging"];
+            [manager createDirectoryAtPath:imageDocPath withIntermediateDirectories:YES attributes:nil error:nil];
+            NSString* imagePath = [imageDocPath stringByAppendingPathComponent:@"tmp"];
+            
+            //        NSString* strToSave = @"file to save!!";
+            //        data = [strToSave dataUsingEncoding: NSUTF8StringEncoding];
+            
+            NSLog(@"data length: %d", data.length);
+            
+            if(![manager fileExistsAtPath:imagePath]){
+                if(![manager createFileAtPath:imagePath contents:data attributes:nil]){
+                    NSLog(@"create file error");
+                }
+            }
+            else{
+                NSError* error;
+                [data writeToFile:imagePath options:NSDataWritingAtomic error:&error];
+                if(error){
+                    NSLog(@"writeToFile %@", error);
+                }
+                
+                //            NSFileHandle* hanlder = [NSFileHandle fileHandleForWritingAtPath:imagePath];
+                //            [hanlder writeData:data];
+                //            [hanlder closeFile];
+            }
+            
+            if(messageCallback){
+                CGFloat width = image.size.width;
+                CGFloat height = image.size.height;
+                NSLog(@"width: %f, height: %f", width, height);
+                messageCallback(0, [imagePath UTF8String], 0, 0);
+            }
+            
+            
+        } failureBlock:^(NSError *err) {
+            NSLog(@"Error: %@", [err localizedDescription]);
+        }];
+    }
+    else {
+        // Manage tasks in background thread
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            UIImage * editedImage = (UIImage *)info[UIImagePickerControllerEditedImage];
+            UIImage * imageToSave = (editedImage ?: (UIImage *)info[UIImagePickerControllerOriginalImage]);
+            
+            UIImage * finalImageToSave = nil;
+            
+            /* Modify image's size before save it to photos album
+             */
+            
+            finalImageToSave = [self ResizeImage:imageToSave Width:size_limit Height:size_limit];
+            
+            //finalImageToSave = imageToSave;
+            
+            CGFloat width = finalImageToSave.size.width;
+            CGFloat height = finalImageToSave.size.height;
+            NSLog(@"width: %f height: %f", width, height);
+            
+            NSData * data;
+            if(UIImagePNGRepresentation(finalImageToSave)){
+                data = UIImagePNGRepresentation(finalImageToSave);
+            }
+            else {
+                data = UIImageJPEGRepresentation(finalImageToSave, 1.0f);
+            }
+            
+            //data = UIImageJPEGRepresentation(finalImageToSave, 0.0f);
+            
+            NSArray * path = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+            NSString* documentPath = [path objectAtIndex:0];
+            
+            NSFileManager* manager = [NSFileManager defaultManager];
+            
+            NSString* imageDocPath = [documentPath stringByAppendingPathComponent:@"ImageStaging"];
+            [manager createDirectoryAtPath:imageDocPath withIntermediateDirectories:YES attributes:nil error:nil];
+            NSString* imagePath = [imageDocPath stringByAppendingPathComponent:@"tmp"];
+            
+            //        NSString* strToSave = @"file to save!!";
+            //        data = [strToSave dataUsingEncoding: NSUTF8StringEncoding];
+            
+            NSLog(@"data length: %d", data.length);
+            
+            if(![manager fileExistsAtPath:imagePath]){
+                if(![manager createFileAtPath:imagePath contents:data attributes:nil]){
+                    NSLog(@"create file error");
+                }
+            }
+            else{
+                NSError* error;
+                [data writeToFile:imagePath options:NSDataWritingAtomic error:&error];
+                if(error){
+                    NSLog(@"writeToFile %@", error);
+                }
+                
+                //            NSFileHandle* hanlder = [NSFileHandle fileHandleForWritingAtPath:imagePath];
+                //            [hanlder writeData:data];
+                //            [hanlder closeFile];
+            }
+            
+            if(messageCallback){
+                messageCallback(0, [imagePath UTF8String], 0, 0);
+            }
+        });
+    }
+}
+
+-(UIImage *)ResizeImage:(UIImage *)imageToSave Width:(CGFloat)width Height:(CGFloat)height {
+    CGFloat wf = imageToSave.size.width / width;
+    CGFloat hf = imageToSave.size.height / height;
+    
+    CGFloat factor = 1.0f;
+    if(wf > hf){
+        factor = wf;
+    }
+    else{
+        factor = hf;
+    }
+    
+    if(factor <= 1){
+        factor = 1.0f;
+    }
+    
+    CGSize sizeToSave = CGSizeMake(imageToSave.size.width / factor, imageToSave.size.height / factor);
+    UIGraphicsBeginImageContextWithOptions(sizeToSave, NO, 0.f);
+    [imageToSave drawInRect:CGRectMake(0.f, 0.f, sizeToSave.width, sizeToSave.height)];
+    UIImage* finalImageToSave = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return finalImageToSave;
 }
 
 @end
