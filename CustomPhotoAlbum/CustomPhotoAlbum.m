@@ -14,6 +14,7 @@
 @interface CustomPhotoAlbum () {
     @private
     ALAssetsLibrary * assetsLibrary_;
+    Boolean need_chop;
 }
 
 @property (nonatomic, strong) ALAssetsLibrary * assetsLibrary;
@@ -50,6 +51,8 @@
 }
 
 - (void)takePhoto: (Boolean) chop {
+    need_chop = chop;
+    
     UIImagePickerControllerSourceType sourceType = UIImagePickerControllerSourceTypeCamera;
     if([UIImagePickerController isSourceTypeAvailable:sourceType]){
         UIImagePickerController *picker = [[UIImagePickerController alloc] init];
@@ -70,6 +73,8 @@
 }
 
 - (void)localPhoto: (Boolean) chop {
+    need_chop = chop;
+    
     UIImagePickerController *picker = [[UIImagePickerController alloc] init];
     picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
     picker.delegate = self;
@@ -115,6 +120,10 @@
     
     CGFloat size_limit = 256;
     
+    if(need_chop){
+        size_limit = 128;
+    }
+    
     if(imgURL != NULL){
         [self.assetsLibrary assetForURL:imgURL resultBlock:^(ALAsset *asset){
             ALAssetRepresentation *rep = [asset defaultRepresentation];
@@ -124,6 +133,7 @@
             NSUInteger buffered = [rep getBytes:buffer fromOffset:0.0 length:rep.size error:nil];
             NSData* data = [NSData dataWithBytesNoCopy:buffer length:buffered freeWhenDone:YES];
             
+            /*
             CGFloat wf = dimension.width / size_limit;
             CGFloat hf = dimension.height / size_limit;
             
@@ -140,6 +150,10 @@
             }
             
             UIImage* image = [[UIImage alloc] initWithData:data scale:factor];
+            data = UIImagePNGRepresentation(image);*/
+            
+            UIImage* image = [[UIImage alloc] initWithData:data];
+            image = [self ResizeImage:image Width:size_limit Height:size_limit];
             data = UIImagePNGRepresentation(image);
             
             NSArray * path = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
